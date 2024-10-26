@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="cnCLnHC7Mu6wV7zz2cIzm-Jmh1VDG8iC4EMCLDyi69U" />
+    <link rel="icon" type="image/x-icon" href="/unnamed.ico">
+<link rel="preload" href="VCROSDMono.woff2" as="font" type="font/woff2" crossorigin>
+
+    <title>Owen's Home On The Net!</title>
+    <!-- The style.css file allows you to change the look of your web pages.
+         If you include the next line in all your web pages, they will all share the same look.
+         This makes it easier to make new pages for your site. -->
+    <link href="style.css" rel="stylesheet" type="text/css" media="all">
+    <script type="text/javascript">
+// <![CDATA[
+var sparks=75; // how many sparks per clicksplosion
+var speed=33; // how fast - smaller is faster
+var bangs=5; // how many can be launched simultaneously (note that using too many can slow the script down)
+var colours=new Array('#03f', '#f03', '#0e0', '#93f', '#0cf', '#f93', '#f0c'); 
+//                     blue    red     green   purple  cyan    orange  pink
+
+/****************************
+*   Clicksplosion Effect    *
+*(c)2012-3 mf2fm web-design *
+*  http://www.mf2fm.com/rv  *
+* DON'T EDIT BELOW THIS BOX *
+****************************/
+var intensity=new Array();
+var Xpos=new Array();
+var Ypos=new Array();
+var dX=new Array();
+var dY=new Array();
+var stars=new Array();
+var decay=new Array();
+var timers=new Array();
+var swide=800;
+var shigh=600;
+var sleft=sdown=0;
+var count=0;
+
+function addLoadEvent(funky) {
+  var oldonload=window.onload;
+  if (typeof(oldonload)!='function') window.onload=funky;
+  else window.onload=function() {
+    if (oldonload) oldonload();
+    funky();
+  }
+}
+
+addLoadEvent(clicksplode);
+
+function clicksplode() { if (document.getElementById) {
+  var i, j;
+  window.onscroll=set_scroll;
+  window.onresize=set_width;
+  document.onclick=eksplode;
+  set_width();
+  set_scroll();
+  for (i=0; i<bangs; i++) for (j=sparks*i; j<sparks+sparks*i; j++) {
+    stars[j]=createDiv('*', 13);
+    document.body.appendChild(stars[j]);
+  }
+}}
+
+function createDiv(char, size) {
+  var div, sty;
+  div=document.createElement('div');
+  sty=div.style;
+  sty.font=size+'px monospace';
+  sty.position='absolute';
+  sty.backgroundColor='transparent';
+  sty.visibility='hidden';
+  sty.zIndex='101';
+  div.appendChild(document.createTextNode(char));
+  return (div);
+}
+
+function bang(N) {
+  var i, Z, A=0;
+  for (i=sparks*N; i<sparks*(N+1); i++) { 
+    if (decay[i]) {
+      Z=stars[i].style;
+      Xpos[i]+=dX[i];
+      Ypos[i]+=(dY[i]+=1.25/intensity[N]);
+      if (Xpos[i]>=swide || Xpos[i]<0 || Ypos[i]>=shigh+sdown || Ypos[i]<0) decay[i]=1;
+	  else {
+        Z.left=Xpos[i]+'px';
+        Z.top=Ypos[i]+'px';
+	  }
+      if (decay[i]==15) Z.fontSize='7px';
+      else if (decay[i]==7) Z.fontSize='2px';
+      else if (decay[i]==1) Z.visibility='hidden';
+	  decay[i]--;
+	}
+	else A++;
+  }
+  if (A!=sparks) timers[N]=setTimeout('bang('+N+')', speed);
+}
+
+function eksplode(e) { 
+  var x, y, i, M, Z, N;
+  set_scroll();
+  y=(e)?e.pageY:event.y+sdown;
+  x=(e)?e.pageX:event.x+sleft;
+  N=++count%bangs;
+  M=Math.floor(Math.random()*3*colours.length);
+  intensity[N]=5+Math.random()*4;
+  for (i=N*sparks; i<(N+1)*sparks; i++) {
+    Xpos[i]=x;
+    Ypos[i]=y-5;
+    dY[i]=(Math.random()-0.5)*intensity[N];
+    dX[i]=(Math.random()-0.5)*(intensity[N]-Math.abs(dY[i]))*1.25;
+    decay[i]=16+Math.floor(Math.random()*16);
+    Z=stars[i].style;
+    if (M<colours.length) Z.color=colours[i%2?count%colours.length:M];
+    else if (M<2*colours.length) Z.color=colours[count%colours.length];
+    else Z.color=colours[i%colours.length];
+    Z.fontSize='13px';
+    Z.visibility='visible';
+  }
+  clearTimeout(timers[N]);
+  bang(N);
+} 
+
+function set_width() {
+  var sw_min=999999;
+  var sh_min=999999;
+  if (document.documentElement && document.documentElement.clientWidth) {
+    if (document.documentElement.clientWidth>0) sw_min=document.documentElement.clientWidth;
+    if (document.documentElement.clientHeight>0) sh_min=document.documentElement.clientHeight;
+  }
+  if (typeof(self.innerWidth)=='number' && self.innerWidth) {
+    if (self.innerWidth>0 && self.innerWidth<sw_min) sw_min=self.innerWidth;
+    if (self.innerHeight>0 && self.innerHeight<sh_min) sh_min=self.innerHeight;
+  }
+  if (document.body.clientWidth) {
+    if (document.body.clientWidth>0 && document.body.clientWidth<sw_min) sw_min=document.body.clientWidth;
+    if (document.body.clientHeight>0 && document.body.clientHeight<sh_min) sh_min=document.body.clientHeight;
+  }
+  if (sw_min==999999 || sh_min==999999) {
+    sw_min=800;
+    sh_min=600;
+  }
+  swide=sw_min-7;
+  shigh=sh_min-7;
+}
+
+function set_scroll() {
+  if (typeof(self.pageYOffset)=='number') {
+    sdown=self.pageYOffset;
+    sleft=self.pageXOffset;
+  }
+  else if (document.body && (document.body.scrollTop || document.body.scrollLeft)) {
+    sdown=document.body.scrollTop;
+    sleft=document.body.scrollLeft;
+  }
+  else if (document.documentElement && (document.documentElement.scrollTop || document.documentElement.scrollLeft)) {
+    sleft=document.documentElement.scrollLeft;
+    sdown=document.documentElement.scrollTop;
+  }
+  else {
+    sdown=0;
+    sleft=0;
+  }
+}
+// ]]>
+</script>
+<script>
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+        var site_data = JSON.parse(this.responseText);
+        var num_arr = site_data.info.views.toString().split("");
+        var num_str = "";
+        for (i = 0; i < num_arr.length; i++) {
+            num_str += num_arr[i];
+            if ( (num_arr.length-1 - i) % 3 == 0 && (num_arr.length-1 - i) != 0 ) {num_str += ",";}
+            var date_str = site_data.info.last_updated;
+            var date_obj = new Date(site_data.info.last_updated);
+            document.getElementById("lastupdate").innerHTML = (date_obj.getMonth()+1) + "-" + date_obj.getDate() + "-" + date_obj.getFullYear();
+        }
+        document.getElementById("hitcount").innerHTML = num_str;
+    }
+};
+xhttp.open("GET", "https://weirdscifi.ratiosemper.com/neocities.php?sitename=owen-spleen", true);
+xhttp.send();
+</script>
+  </head>
+  <body>
+    <small>NOTE: THIS IS NOT A REAL AD</small>
+    <br>
+    <img src="PunchtheMonkey.gif" alt="Punch that monkey!" width="75%">
+  <pre>
+    ██████  ██     ██ ███████ ███    ██ ███████     ██     ██ ███████ ██████  ███████ ██ ████████ ███████ 
+   ██  ████ ██     ██ ██      ████   ██ ██          ██     ██ ██      ██   ██ ██      ██    ██    ██      
+   ██ ██ ██ ██  █  ██ █████   ██ ██  ██ ███████     ██  █  ██ █████   ██████  ███████ ██    ██    █████   
+   ████  ██ ██ ███ ██ ██      ██  ██ ██      ██     ██ ███ ██ ██      ██   ██      ██ ██    ██    ██      
+    ██████   ███ ███  ███████ ██   ████ ███████      ███ ███  ███████ ██████  ███████ ██    ██    ███████ 
+   </pre>
+   <img src="invisible-png_optimized.png" alt="OWEN'S WEBSITE">
+
+ <audio src="https://files.catbox.moe/41d8dl.mp3" autoplay loop>
+<p>If you are reading this, it is because your browser does not support the audio element.     </p>
+</audio>
+<style>
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  body {
+    font-family: 'VCR OSD Mono';
+    background: url('space.gif') center center fixed;
+    color: white;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  a {
+    color: white;
+  }
+  ul {
+    display: inline-block;
+    text-align: left;
+  }
+  @font-face {
+    font-family: 'VCR OSD Mono';
+    src: url('VCROSDMono.woff2') format('woff2'),
+         url('VCROSDMono.woff') format('woff');
+  }
+</style>
+  <br><a rel="me" href="https://mastodon.social/@owenk123"></a>
+  <br>
+Welcome to my website!
+<br>
+    <p>My interests:</p>
+<div>
+    <ul>
+      <li><a href="https://neocities.org">Websites</a></li>
+      <li><a href="https://steamcommunity.com/id/keaneob11">Gaming</a></li>
+      <li><a href="https://old.reddit.com/r/pcmasterrace/">Computers</a></li>
+      <li><a href="https://owen-spleen.neocities.org/pets/">Pets</a></li>
+      <li><a href="https://owen-spleen.neocities.org/blog/">The Owen Times</a></li>
+    </ul>
+</div>
+<!-- Links Section -->
+<a href="https://neocities.org/">
+  <img src="neocities.gif" alt="Neocities">
+</a>
+<a href="http://users3.smartgb.com/g/g.php?a=s&i=g36-36544-29">
+  <img alt="Guestbook" border="0" src="http://extras3.smartgb.com/b/gb_80x40.gif" width="80" height="40">
+</a>
+<a href="http://info.cern.ch/hypertext/WWW/TheProject.html">
+  <img src="got_html.gif" alt="The Project">
+</a>
+<a href="https://www.linuxmint.com/">
+  <img src="linux_mint.gif" alt="Linux Mint">
+</a>
+<a href="https://wii.hacks.guide/">
+  <img src="wii.webp" alt="Wii Hacks">
+</a>
+<a href="https://en.wikipedia.org/wiki/1080p">
+  <img src="1080.jpg" alt="1080p">
+</a>
+<a href="https://en.wikipedia.org/wiki/Computer">
+  <img src="computer.webp" alt="Computer">
+</a>
+<a href="https://3ds.hacks.guide/">
+  <img src="button169.png" alt="3DS Hacks">
+</a>
+<!-- Additional Images -->
+<img src="Beenz.com-logo_88x31.png">
+<img src="flash.gif">
+<img src="Tumblr_l_29772772367890.gif">
+<img src="button.png">
+<div align=center><a href='https://www.counter12.com'><img src='https://www.counter12.com/img-55x9z84zWZ10d3b9-36.gif' border='0' alt='counter'></a><script type='text/javascript' src='https://www.counter12.com/ad.js?id=55x9z84zWZ10d3b9'></script></div>
+<!-- Webring Section -->
+<div id="templateWebring">
+  <link rel="stylesheet" href="https://fan.nekoweb.org/webring.css">
+  <div id="webringiconbox">
+    <link rel="stylesheet" href="https://fan.nekoweb.org/webring.css">
+    <img id="iconWebring" src="https://fan.nekoweb.org/images/oscwricons/owenbot.png">
+  </div>
+  <div id="webringdescbox">
+    <link rel="stylesheet" href="https://fan.nekoweb.org/webring.css">
+    <p id="webringdesc">
+      <strong>Owen</strong> is a certified<br>
+      <strong>Bot</strong> fan in the <strong>OSC Webring</strong>!
+    </p>
+  </div>
+  <div id="webringlinks">
+    <link rel="stylesheet" href="https://fan.nekoweb.org/webring.css">
+    <p id="linkparaWebring"> | <a href="https://fan.nekoweb.org/oscwrmem.html">Members List</a> | <br> Part of the <a href="https://fan.nekoweb.org/oscwr.html">OSC Webring</a>
+    </p>
+  </div>
+</div>
+<!-- Closing Message -->
+<br>
+Have A Nice Day!
+<br>
+Last modified: <script>document.write(document.lastModified);</script>.
+</body>
+</html>
